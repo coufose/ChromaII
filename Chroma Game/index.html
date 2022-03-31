@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CHROMA II</title>
+    <link href="https://fonts.googleapis.com/css?family=Antic+Slab" rel="stylesheet">
+    </head> 
+    <body>
+        <div id="container">
+            <div id="redSquare" class="square"></div>
+            <div id="blueSquare" class="square"></div>
+            <div id="yellowSquare" class="square"></div>
+        </div>
+        <div type="text" id="total"></div>
+        <div id="container">
+            <div id="mixSquare" class="square"></div>
+            <div id="goalSquare" class="square"></div> 
+        </div>
+        <button type="button" id="check">check!</button>
+        <canvas id="chromaboard" width="500" height="500"></canvas>
+        <style>
+            #chromaboard {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%,-50%);
+            }
+            #container {
+	            max-width: 500px;
+	            margin: 0 auto;
+	            padding-top: 20px;
+            }
+            .square {
+                width: 30%;
+	            padding-bottom: 30%;
+	            float: left;
+	            margin: 1.66%;
+	            transition: background .5s;
+	            -webkit-transition: background .5s;
+	            -moz-transition: background .5s;
+            }
+            #redSquare {
+                background-color: hsl(0, 100%, 50%);
+            }
+            #blueSquare {
+                background-color: hsl(210, 100%, 50%);
+            }
+            #yellowSquare {
+                background-color: hsl(60,100%,50%);
+            }
+            #mixSquare {
+                background-color: rgb(255,255,255);
+                border: 1px solid black;
+            }
+            #goalSquare {
+                background-color: white;
+                border: 1px solid black;
+            }
+
+        </style>
+    </body>
+    <script>
+        const chromaboard = document.getElementById("chromaboard");
+        const chromaboard_ctx = chromaboard.getContext("2d");
+
+        const redSquare = document.getElementById("redSquare");
+        const blueSquare = document.getElementById("blueSquare");
+        const yellowSquare = document.getElementById("yellowSquare");
+        const mixSquare = document.getElementById("mixSquare");
+        const goalSquare = document.getElementById("goalSquare");
+        const checkButton = document.getElementById("check");
+
+        let hue = 0,
+        colorArray = [],
+        saturation = 0, 
+        guessHue = 0
+        newColorArray = [];
+
+    
+        let numberOfColors = 1;        
+        randomlyColorGoalSquare(numberOfColors);
+        init();
+
+        
+        function init() {
+                redSquare.addEventListener('click', addRed(colorArray));
+                blueSquare.addEventListener('click', addBlue(colorArray));
+                yellowSquare.addEventListener('click', addYellow(colorArray));
+                checkButton.addEventListener('click',checkAnswer);
+                updateTotal();
+        }
+        
+        function setStartConditions() {
+            mixSquare.style.backgroundColor = 'white';
+            hue = 0;
+            colorArray = [];
+            saturation = 0;
+            guessHue = 0;
+            newColorArray = [];
+            numberOfColors = 1;
+            randomlyColorGoalSquare(numberOfColors);
+        }
+
+        function setNextLevelConditions() {
+            mixSquare.style.backgroundColor = 'white';
+            hue = 0;
+            colorArray = [];
+            saturation = 0;
+            guessHue = 0;
+            newColorArray = [];
+            numberOfColors+=1;
+            randomlyColorGoalSquare(numberOfColors);
+        }
+
+
+        function addRed(array) {
+            return () => {
+                if (colorArray.length<numberOfColors) {
+                    array.push([0,100]);
+                    mixColors(mixSquare, colorArray);
+                    updateTotal();}
+                else {window.alert('error: max colors reached')}
+            }
+        }
+
+       function addBlue(array) {
+           //colorArray.push([-50*Math.sqrt(3), -50]);          standard blue
+           return () => {
+                if (colorArray.length<numberOfColors) {
+                    array.push([-50, -50*Math.sqrt(3)]);
+                    mixColors(mixSquare, colorArray);
+                    updateTotal();}
+                else {window.alert('error: max colors reached')}
+           }
+        }   
+
+        function addYellow(array) {
+            return () => {
+                if (colorArray.length<numberOfColors){
+                    array.push([50*Math.sqrt(3), 50]);
+                    mixColors(mixSquare, colorArray);
+                    updateTotal();}
+                else {window.alert('error: max colors reached')}
+            }
+        }
+
+        function mixColors(square, array) {
+            if (array.length > 0) {
+                let totalX = 0,
+                totalY = 0;
+                array.forEach((vector) => {
+                    totalX += vector[0];
+                    totalY += vector[1];
+                })
+
+                let mixSquareX = totalX / array.length,
+                mixSquareY = totalY / array.length;
+
+                mixSquareSaturation = Math.sqrt(mixSquareX ** 2 + mixSquareY ** 2)
+
+                let mixSquareHue;
+                if (mixSquareX > 0) {
+                    mixSquareHue = 90 - (Math.atan(mixSquareY/mixSquareX)*180/Math.PI);
+                }
+                if (mixSquareX < 0) {
+                    mixSquareHue = 270 - (Math.atan(mixSquareY/mixSquareX)*180/Math.PI);
+                }
+                if (mixSquareX == 0) {
+                    if (mixSquareY >= 0) {mixSquareHue = 0}
+                    if (mixSquareHue < 0) {mixSquareHue = 180}
+                }
+                square.style.backgroundColor = "hsl(" + mixSquareHue + ", " + mixSquareSaturation + "%, 50%)";
+            }
+            else {
+                return;
+            }
+        }
+
+
+        function updateTotal() {
+            document.getElementById("total").innerHTML = 'colors mixed: ' + colorArray.length + ' / ' + numberOfColors;
+        }
+
+        function randomlyColorGoalSquare(n) {
+            newColorArray = [],
+            functionList = [addRed(newColorArray), addBlue(newColorArray), addYellow(newColorArray)];
+            for (let i=0; i<n; i++) {
+                let addColor = functionList[Math.floor(Math.random() * functionList.length)];
+                addColor(newColorArray);
+                mixColors(goalSquare, newColorArray);
+            }
+
+            //function copied from updateMixSquare 
+
+            
+
+
+        }
+        
+        function checkAnswer() {
+            let guessHueRGB = goalSquare.style.backgroundColor;
+            guessHueRGB = guessHueRGB.substr(4,guessHueRGB.length-5);
+            guessHueArray = guessHueRGB.split(',')
+
+            let hueRGB = mixSquare.style.backgroundColor; 
+            hueRGB = hueRGB.substr(4,hueRGB.length-5);
+            hueArray = hueRGB.split(',');
+
+            let percentage = (255-(Math.abs(guessHueArray[0] - hueArray[0])) + 
+                255 - (Math.abs(guessHueArray[1] - hueArray[1])) + 255 - (Math.abs(guessHueArray[2] - hueArray[2]))) / 765 * 100
+            if(percentage == 100) {
+                window.alert('correct!');
+                setNextLevelConditions();
+                init();
+            }
+            else {
+                window.alert(`${percentage}%. Game over. Try again?`);
+                setStartConditions();
+                init();
+
+            }
+        }
+
+    </script>
+</html>
